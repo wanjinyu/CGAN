@@ -18,9 +18,10 @@ G_dim = 500
 G_dim = 500
 mb_size = 64
 Ndata = 10000
-lr_G = 0.0001
+lr_G = 0.001
 lr_D = 0.0001
-#load data 
+
+# load data 
 # X: data samples, Y: labels
 filename='Y.mat'
 data_all = sio.loadmat(filename)
@@ -30,6 +31,7 @@ filename='X.mat'
 data_all = sio.loadmat(filename)
 x = data_all['X']
 Nsample = len(x)
+
 # nomarlization
 x_range = np.zeros([X_dim,2])
 for i in range(X_dim):
@@ -51,13 +53,14 @@ for i in range(y_dim):
 Ydata = Ydata.reshape([Nsample,y_dim])
 Xdata = Xdata.reshape([Nsample,X_dim])
 
+# get training data
 idx = np.arange(Nsample)
 np.random.shuffle(idx)
 
 Xtrain = Xdata[idx[0:Ndata],:]
 Ytrain = Ydata[idx[0:Ndata],:]
 
-
+# construct CGAN
 CG_nets = CGAN.CGAN(X_dim, y_dim, Z_dim, G_dim, G_dim)
 
 X = tf.placeholder(tf.float32,shape=[None,X_dim])
@@ -67,6 +70,7 @@ Z = tf.placeholder(tf.float32, shape=[None,Z_dim])
 G_sample = CG_nets.generator(Z,y)
 D_real, D_logit_real = CG_nets.discriminator(X,y)
 D_fake, D_logit_fake = CG_nets.discriminator(G_sample,y)
+
 # loss function
 D_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits\
                               (logits=D_logit_real, labels=tf.ones_like(D_logit_real))) 
@@ -93,7 +97,7 @@ i=0
 G_history = []
 D_history = []
 Nepochs = 10000
-for it in range(1000000):
+for it in range(Nepochs*Ndata/mb_size):
     X_mb, y_mb =  sess.run(next_element)
     Z_sample = CG_nets.sample_Z(len(X_mb[:,0]), Z_dim)
     # train D an G 
